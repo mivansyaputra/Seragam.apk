@@ -1,0 +1,8 @@
+{
+  "appId": "id.madrasah.seragam",
+  "appName": "Seragam Al Falahiyah",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  }
+}
