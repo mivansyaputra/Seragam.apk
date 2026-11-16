@@ -33,17 +33,21 @@ jobs:
 
       - name: Set app icon
         run: |
-          if command -v magick >/dev/null 2>&1; then IM="magick"; else IM="convert"; fi
-          RES=android/app/src/main/res
-          rm -rf $RES/mipmap-anydpi-v26
-          for d in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
-            name=${d%%:*}; size=${d##*:}
-            $IM icon.png -background white -gravity center \
-              -resize ${size}x${size} -extent ${size}x${size} \
-              $RES/mipmap-$name/ic_launcher.png
-            cp $RES/mipmap-$name/ic_launcher.png $RES/mipmap-$name/ic_launcher_round.png
-            cp $RES/mipmap-$name/ic_launcher.png $RES/mipmap-$name/ic_launcher_foreground.png
-          done
+          pip install pillow
+          python3 - <<'EOF'
+          import shutil
+          from PIL import Image
+          res = "android/app/src/main/res"
+          shutil.rmtree(res + "/mipmap-anydpi-v26", ignore_errors=True)
+          src = Image.open("icon.png").convert("RGBA")
+          for d, size in [("mdpi",48),("hdpi",72),("xhdpi",96),("xxhdpi",144),("xxxhdpi",192)]:
+              im = src.copy()
+              im.thumbnail((size, size))
+              bg = Image.new("RGBA", (size, size), "white")
+              bg.paste(im, ((size-im.width)//2, (size-im.height)//2), im)
+              for n in ("ic_launcher.png","ic_launcher_round.png","ic_launcher_foreground.png"):
+                  bg.convert("RGB").save(res + "/mipmap-" + d + "/" + n)
+          EOF
 
       - name: Sync web assets
         run: npx cap sync android
